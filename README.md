@@ -1,0 +1,1 @@
+# pawai-obor-almakmur

@@ -21,9 +21,28 @@
     <script src="../assets/js/app.js"></script>
     <script>
         protectPage().then(async () => {
-            // Logika ambil semua data skor_pos dan gabungkan per kelompok
-            // Aa bisa pakai Query Join atau View di sini
+    // Ambil data peserta dan semua skor yang masuk
+    const { data: pesertas } = await supabaseClient.from('peserta').select('id, nama_kelompok');
+    const { data: skors } = await supabaseClient.from('skor_pos').select('*');
+    
+    const tbody = document.getElementById('admin-body');
+    tbody.innerHTML = pesertas.map(p => {
+        // Map nilai untuk 5 pos (default '-' jika belum ada nilai)
+        const rowScores = [1, 2, 3, 4, 5].map(idPos => {
+            const entry = skors.find(s => s.id_peserta === p.id && s.id_pos === idPos);
+            return entry ? entry.nilai : '-';
         });
+
+        return `
+            <tr>
+                <td>${p.nama_kelompok}</td>
+                <td>${rowScores[0]}</td><td>${rowScores[1]}</td>
+                <td>${rowScores[2]}</td><td>${rowScores[3]}</td>
+                <td>${rowScores[4]}</td>
+            </tr>
+        `;
+    }).join('');
+});
     </script>
 </body>
 </html>

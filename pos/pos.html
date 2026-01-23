@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Input Nilai Pos</title>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>📝 Input Nilai</h2>
+            <form id="pos-form">
+                <div class="form-group">
+                    <label>Pilih Kelompok</label>
+                    <select id="kelompok" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Skor (0-100)</label>
+                    <input type="number" id="skor" min="0" max="100" required>
+                </div>
+                <button class="btn" type="submit">Kirim Nilai</button>
+            </form>
+            <button onclick="handleLogout()" style="margin-top:20px; background:none; border:none; color:red; cursor:pointer; width:100%;">Logout</button>
+        </div>
+    </div>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        protectPage().then(async (session) => {
+            const posId = session.user.user_metadata.pos_id; // Misal: 1, 2, dst
+            const { data: pesertas } = await supabaseClient.from('peserta').select('*');
+            document.getElementById('kelompok').innerHTML = pesertas.map(p => `<option value="${p.id}">${p.nama_kelompok}</option>`).join('');
+            
+            document.getElementById('pos-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const { error } = await supabaseClient.from('skor_pos').insert({
+                    id_peserta: e.target.kelompok.value,
+                    id_pos: posId,
+                    nilai: e.target.skor.value
+                });
+                if (error) alert("Gagal (Mungkin sudah diinput): " + error.message);
+                else alert("Berhasil!");
+            };
+        });
+    </script>
+</body>
+</html>

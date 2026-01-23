@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Leaderboard Pawai Obor</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Skor Pawai Obor</h1>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Peringkat</th><th>Kelompok</th><th>Rata-rata</th></tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+        <p style="text-align:center; margin-top:20px;"><a href="login.html" style="color:#ccc; text-decoration:none;">Panitia Login</a></p>
+    </div>
+    <script src="assets/js/app.js"></script>
+    <script>
+        async function loadData() {
+            const { data } = await supabaseClient.from('leaderboard').select('*').order('nilai_akhir', { ascending: false });
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = data.map((d, i) => `
+                <tr><td>${i+1}</td><td><b>${d.nama_kelompok}</b></td><td>${parseFloat(d.nilai_akhir).toFixed(2)}</td></tr>
+            `).join('');
+        }
+        loadData();
+    </script>
+</body>
+</html>

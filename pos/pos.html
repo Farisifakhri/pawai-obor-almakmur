@@ -5,79 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Input Nilai - Juri Pawai</title>
+    <title>Input Nilai - Operator Pos</title>
 </head>
 <body>
-    <div class="container">
-        <div class="card" style="text-align: center; border-bottom: 5px solid var(--accent);">
-            <div id="pos-badge" style="font-weight: 800; color: var(--primary-dark);">MEMUAT IDENTITAS...</div>
-            <h2 style="margin-top: 5px;">Form Penilaian Juri</h2>
-        </div>
+    <div class="login-screen">
+        <div class="card login-card" style="max-width: 500px;">
+            
+            <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+                <div id="pos-badge" style="font-weight: 800; color: var(--primary-dark); letter-spacing: 1px; font-size: 0.9rem; text-transform: uppercase;">MEMUAT POS...</div>
+                <h2 style="margin-top: 5px; font-weight: 800;">Input Kolektif 3 Juri</h2>
+            </div>
 
-        <div class="card">
             <form id="pos-form">
-                <label>🔍 Cari Kelompok (RT/RW)</label>
-                <input type="text" id="search-kelompok" placeholder="Contoh: RT 03..." autocomplete="off">
+                <div class="form-group">
+                    <label>🔍 Cari Kelompok (RT/RW)</label>
+                    <input type="text" id="search-kelompok" placeholder="Ketik nomor RT..." autocomplete="off">
+                </div>
                 
-                <label style="display:block; margin-top:15px;">👥 Pilih Kelompok</label>
-                <select id="kelompok" size="5" required></select>
-
-                <div style="margin-top: 25px; text-align: center;">
-                    <label>🏆 Skor (0 - 100)</label>
-                    <input type="number" id="skor" min="0" max="100" required 
-                           style="font-size: 2.5rem; font-weight: 800; color: var(--primary-dark);">
+                <div class="form-group">
+                    <label>👥 Pilih Kelompok</label>
+                    <select id="kelompok" size="5" required style="margin-top: 8px;"></select>
                 </div>
 
-                <button class="btn" type="submit" id="btn-submit" style="margin-top:20px;">KIRIM NILAI SEKARANG</button>
+                <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div style="text-align: center;">
+                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 1</label>
+                        <input type="number" id="skor1" min="0" max="100" placeholder="0" required 
+                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
+                    </div>
+                    <div style="text-align: center;">
+                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 2</label>
+                        <input type="number" id="skor2" min="0" max="100" placeholder="0" required 
+                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
+                    </div>
+                    <div style="text-align: center;">
+                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 3</label>
+                        <input type="number" id="skor3" min="0" max="100" placeholder="0" required 
+                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
+                    </div>
+                </div>
+
+                <button class="btn" type="submit" id="btn-submit" style="margin-top:25px;">🚀 SIMPAN SEMUA NILAI JURI</button>
             </form>
+
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #ddd; text-align: center;">
+                <button onclick="handleLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    🚪 Keluar dari Sistem
+                </button>
+            </div>
         </div>
-        <center><button onclick="handleLogout()" style="background:none; border:none; color:red; cursor:pointer;">Keluar</button></center>
     </div>
 
-    <div id="toast" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2d3436; color:white; padding:12px 25px; border-radius:50px; display:none; z-index:1000;"></div>
+    <div id="toast" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2d3436; color:white; padding:12px 25px; border-radius:50px; display:none; z-index:1000; box-shadow: var(--shadow);"></div>
 
     <script src="../assets/js/app.js"></script>
     <script>
         let daftarPeserta = [];
-        let pId, jId;
+        let pId;
 
         function showToast(msg, err=false) {
             const t = document.getElementById('toast');
-            t.innerText = msg; t.style.background = err ? '#e74c3c' : '#2d3436';
-            t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
+            t.innerText = msg; 
+            t.style.background = err ? '#e74c3c' : '#2d3436';
+            t.style.display = 'block'; 
+            setTimeout(() => t.style.display = 'none', 3000);
         }
 
         protectPage().then(async (session) => {
+            // Mengambil pos_id dari metadata akun yang sedang login
             pId = session.user.user_metadata.pos_id;
-            jId = session.user.user_metadata.juri_id;
-            document.getElementById('pos-badge').innerText = `🚩 POS ${pId} - JURI ${jId}`;
+            document.getElementById('pos-badge').innerText = `🚩 OPERATOR POS ${pId}`;
             
+            // Mengambil daftar RT dari database
             const { data } = await supabaseClient.from('peserta').select('*').order('nama_kelompok', { ascending: true });
-            daftarPeserta = data; renderKelompok(data);
+            daftarPeserta = data; 
+            renderKelompok(data);
 
+            // Fitur Live Search untuk mempermudah mencari nama RT
             document.getElementById('search-kelompok').oninput = (e) => {
                 const k = e.target.value.toLowerCase();
                 renderKelompok(daftarPeserta.filter(p => p.nama_kelompok.toLowerCase().includes(k)));
             };
 
+            // Menangani pengiriman skor (3 Juri sekaligus)
             document.getElementById('pos-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('btn-submit');
-                btn.disabled = true; btn.innerText = "⏳ Mengirim...";
-
-                const { error } = await supabaseClient.from('skor_pos').insert({
-                    id_peserta: document.getElementById('kelompok').value,
-                    id_pos: pId, id_juri: jId, nilai: document.getElementById('skor').value
-                });
+                const idPeserta = document.getElementById('kelompok').value;
                 
-                btn.disabled = false; btn.innerText = "KIRIM NILAI SEKARANG";
-                if (error) showToast("❌ Gagal! Anda sudah menilai RT ini.", true);
-                else { showToast("✅ Berhasil disimpan!"); e.target.reset(); renderKelompok(daftarPeserta); }
+                btn.disabled = true; 
+                btn.innerText = "⏳ Sedang Menyimpan...";
+
+                const scoresToUpload = [
+                    { id_peserta: idPeserta, id_pos: pId, id_juri: 1, nilai: document.getElementById('skor1').value },
+                    { id_peserta: idPeserta, id_pos: pId, id_juri: 2, nilai: document.getElementById('skor2').value },
+                    { id_peserta: idPeserta, id_pos: pId, id_juri: 3, nilai: document.getElementById('skor3').value }
+                ];
+
+                // Menggunakan UPSERT agar data bisa dikoreksi/timpa jika ada kesalahan ketik
+                const { error } = await supabaseClient
+                    .from('skor_pos')
+                    .upsert(scoresToUpload, { onConflict: 'id_peserta, id_pos, id_juri' });
+                
+                btn.disabled = false; 
+                btn.innerText = "🚀 SIMPAN SEMUA NILAI JURI";
+
+                if (error) {
+                    showToast("❌ Gagal menyimpan data juri.", true);
+                } else { 
+                    showToast("✅ Berhasil! 3 Nilai Juri telah tersimpan."); 
+                    e.target.reset(); 
+                    renderKelompok(daftarPeserta); 
+                }
             };
         });
 
         function renderKelompok(d) {
-            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}">${p.nama_kelompok}</option>`).join('');
+            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}" style="padding:10px;">${p.nama_kelompok}</option>`).join('');
         }
     </script>
 </body>

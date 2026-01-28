@@ -3,57 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" type="image/png" href="assets/img/favicon.png">
+    
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Leaderboard - Pawai Obor Al-Ma'mur</title>
+    
+    <title>Leaderboard Pawai Obor Al-Ma'mur</title>
 </head>
 <body>
-    <div class="container">
-        <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
-            <div style="font-size: 50px;">🏮</div>
-            <h1>Pawai Obor Al-Ma'mur<br><span style="font-size: 16px; color: #636e72; font-weight: 500;">LIVE LEADERBOARD</span></h1>
+    <div class="screen-wrapper">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 50px; margin-bottom: 10px;">🏮</div>
+            <h1 style="color: var(--primary-dark); font-weight: 800; margin-bottom: 5px;">Leaderboard Live</h1>
+            <p style="color: #636e72; font-weight: 600;">Pawai Obor PRISMA Al-Ma'mur</p>
         </div>
 
-        <div class="card">
+        <div class="card" style="max-width: 850px;">
             <div class="table-wrapper">
                 <table>
                     <thead>
-                        <tr><th style="text-align:center">Posisi</th><th>Nama Kelompok</th><th style="text-align:center">Skor Akhir</th></tr>
+                        <tr>
+                            <th style="text-align:center; width: 80px;">Posisi</th>
+                            <th>Nama Kelompok (RT/RW)</th>
+                            <th style="text-align:center; width: 120px;">Skor Akhir</th>
+                        </tr>
                     </thead>
                     <tbody id="leaderboard-body">
-                        <tr><td colspan="3" style="text-align:center; padding: 40px; color:#999;">Mengambil data...</td></tr>
+                        <tr>
+                            <td colspan="3" style="text-align:center; padding: 40px; color: #b2bec3;">
+                                ⏳ Mengambil data klasemen terbaru...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <p style="text-align:center;"><a href="login.html" style="color:rgba(0,0,0,0.3); text-decoration:none; font-size: 12px;">Login Panitia</a></p>
+
+        <div class="footer-action">
+            <a href="login.html" class="btn-premium">
+                <span>🔐 Login Panitia</span>
+            </a>
+            <p style="margin-top: 15px; font-size: 11px; color: rgba(0,0,0,0.4); font-weight: 600;">
+                Sistem Penilaian Digital oleh PRISMA Al-Ma'mur Tech Team
+            </p>
+        </div>
     </div>
 
     <script src="assets/js/app.js"></script>
     <script>
-        async function loadData() {
-            const { data } = await supabaseClient.from('leaderboard').select('*').order('nilai_akhir', { ascending: false });
+        // Fungsi untuk mengambil data dari view 'leaderboard'
+        async function loadLeaderboard() {
+            const { data, error } = await supabaseClient
+                .from('leaderboard')
+                .select('*')
+                .order('nilai_akhir', { ascending: false });
+
             const tbody = document.getElementById('leaderboard-body');
             
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 30px;">Belum ada nilai masuk.</td></tr>';
+            if (error) {
+                console.error('Error fetching data:', error);
                 return;
             }
 
-            tbody.innerHTML = data.map((d, i) => {
-                let rankClass = i < 3 ? `rank-badge rank-${i+1}` : '';
-                let rankIcon = i < 3 ? i+1 : i+1;
-                return `
-                    <tr>
-                        <td style="text-align:center"><div class="${rankClass}">${rankIcon}</div></td>
-                        <td style="font-weight:700">${d.nama_kelompok}</td>
-                        <td style="text-align:center; font-weight:800; color:var(--primary-dark); font-size: 16px;">${parseFloat(d.nilai_akhir).toFixed(2)}</td>
-                    </tr>
-                `;
-            }).join('');
+            if (data && data.length > 0) {
+                tbody.innerHTML = data.map((item, index) => {
+                    // Logika pewarnaan untuk Top 3
+                    let badgeColor = '#2d3436';
+                    if (index === 0) badgeColor = '#f1c40f'; // Emas
+                    if (index === 1) badgeColor = '#95a5a6'; // Perak
+                    if (index === 2) badgeColor = '#cd7f32'; // Perunggu
+
+                    return `
+                        <tr>
+                            <td align="center">
+                                <span style="background: ${badgeColor}; color: white; padding: 5px 12px; border-radius: 50px; font-weight: 800; font-size: 13px;">
+                                    ${index + 1}
+                                </span>
+                            </td>
+                            <td style="font-weight: 700; color: var(--primary-dark);">${item.nama_kelompok}</td>
+                            <td align="center" style="font-weight: 800; color: var(--primary); font-size: 18px;">
+                                ${parseFloat(item.nilai_akhir).toFixed(2)}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" align="center" style="padding:30px; color:#999;">Belum ada nilai yang masuk.</td></tr>`;
+            }
         }
-        loadData();
-        setInterval(loadData, 10000); // Auto refresh tiap 10 detik
+
+        // Jalankan saat halaman dimuat
+        loadLeaderboard();
+
+        // Refresh otomatis setiap 15 detik
+        setInterval(loadLeaderboard, 15000);
     </script>
 </body>
 </html>

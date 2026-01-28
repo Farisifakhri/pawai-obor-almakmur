@@ -25,7 +25,21 @@ body {
     padding: 15px;
 }
 
-/* Container utama untuk centering dinamis */
+/* ==========================================
+   LAYOUT UTAMA & CENTERING
+   ========================================== */
+
+/* Wrapper agar konten berada di tengah layar (Login & Pos) */
+.login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 20px;
+}
+
+/* Wrapper untuk Leaderboard (Atas ke bawah) */
 .screen-wrapper {
     display: flex;
     flex-direction: column;
@@ -43,73 +57,47 @@ body {
     padding-bottom: 50px;
 }
 
-/* Card dengan efek Glassmorphism */
+/* ==========================================
+   CARD & BOX STYLING
+   ========================================== */
+
 .card {
     background: var(--glass);
     backdrop-filter: blur(12px);
     border-radius: 24px;
-    padding: 25px;
+    padding: 30px;
     box-shadow: var(--shadow);
     border: 1px solid rgba(255,255,255,0.4);
     margin-bottom: 20px;
     width: 100%;
 }
 
-.card-center {
+/* Card khusus login agar tidak terlalu lebar di Laptop */
+.login-card {
     max-width: 450px;
+    animation: fadeIn 0.8s ease-out;
 }
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* ==========================================
+   FORM ELEMENTS
+   ========================================== */
 
 h1 {
     font-weight: 800;
     color: var(--primary-dark);
     text-align: center;
     margin-bottom: 1.5rem;
-}
-
-/* Styling Tabel Leaderboard */
-.table-wrapper {
-    overflow-x: auto;
-    border-radius: 16px;
-    background: white;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
-
-th {
-    background: var(--primary-dark);
-    color: white;
-    padding: 18px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-td {
-    padding: 16px;
-    border-bottom: 1px solid #f1f2f6;
-    font-size: 15px;
-}
-
-/* Input & Form Styling */
-input, 
-select {
-    width: 100%;
-    padding: 14px;
-    border: 2px solid #edf2f7;
-    border-radius: 14px;
-    font-family: inherit;
-    font-size: 15px;
-    margin-top: 8px;
-    outline: none;
-    transition: 0.3s;
-}
-
-input:focus {
-    border-color: var(--primary);
 }
 
 .form-group {
@@ -124,7 +112,28 @@ input:focus {
     color: var(--primary-dark);
 }
 
-/* Tombol Premium Kapsul */
+input, 
+select {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #edf2f7;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    margin-top: 8px;
+    outline: none;
+    transition: 0.3s ease;
+}
+
+input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(0, 184, 148, 0.1);
+}
+
+/* ==========================================
+   BUTTON PREMIUM KAPSUL
+   ========================================== */
+
 .btn-premium {
     display: inline-flex;
     align-items: center;
@@ -142,12 +151,49 @@ input:focus {
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: none;
     cursor: pointer;
+    width: 100%;
 }
 
 .btn-premium:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 10px 25px rgba(0, 184, 148, 0.4);
 }
+
+/* ==========================================
+   TABEL & LEADERBOARD
+   ========================================== */
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 20px;
+    background: white;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+th {
+    background: var(--primary-dark);
+    color: white;
+    padding: 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+td {
+    padding: 18px;
+    border-bottom: 1px solid #f1f2f6;
+    font-size: 15px;
+}
+
+/* ==========================================
+   FOOTER & RESPONSIVE
+   ========================================== */
 
 .footer-action {
     margin-top: 40px;
@@ -157,9 +203,118 @@ input:focus {
 
 @media (max-width: 600px) {
     .card {
-        padding: 15px;
+        padding: 20px;
     }
     h1 {
-        font-size: 22px;
+        font-size: 24px;
     }
+    .btn-premium {
+        padding: 14px 25px;
+    }
+}
+
+/* ==========================================
+   FITUR PROGRES & STATUS BADGE
+   ========================================== */
+
+/* Container untuk Progress Bar */
+.progress-container {
+    background: #edf2f7;
+    border-radius: 50px;
+    height: 12px;
+    width: 100%;
+    margin: 15px 0;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Bagian Bar yang terisi */
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary) 0%, #55efc4 100%);
+    height: 100%;
+    width: 0%; /* Diupdate via JS */
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0, 184, 148, 0.2);
+}
+
+/* Badge Status untuk RT (Sudah/Belum Dinilai) */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-filled {
+    background: rgba(0, 184, 148, 0.1);
+    color: var(--primary);
+}
+
+.status-empty {
+    background: #f1f2f6;
+    color: #b2bec3;
+}
+
+/* Grid Statistik di Dashboard Admin */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.stat-card p {
+    font-size: 11px;
+    font-weight: 700;
+    color: #636e72;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.stat-card h2 {
+    font-size: 24px;
+    color: var(--primary-dark);
+    font-weight: 800;
+}
+/* Tombol Premium Kapsul */
+.btn-premium {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%; /* Tombol lebar penuh agar mudah ditekan di HP */
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white !important;
+    padding: 16px 30px;
+    border-radius: 50px; /* Bentuk kapsul */
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.btn-premium:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 184, 148, 0.4);
+}
+
+.btn-premium:active {
+    transform: scale(0.98);
 }

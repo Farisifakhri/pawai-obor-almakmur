@@ -6,24 +6,23 @@
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <title>Input Nilai - Operator Pos</title>
+    <title>Input Nilai - Pos Pawai</title>
 </head>
 <body>
     <div class="login-screen">
-        <div class="card login-card" style="max-width: 500px;">
-            
+        <div class="card login-card" style="max-width: 550px;">
             <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
-                <div id="pos-badge" style="font-weight: 800; color: var(--primary-dark); letter-spacing: 1px; font-size: 0.9rem; text-transform: uppercase;">MEMUAT POS...</div>
-                <h2 style="margin-top: 5px; font-weight: 800;">Input Kolektif 3 Juri</h2>
+                <div id="pos-badge" style="font-weight: 800; color: var(--primary-dark); letter-spacing: 1px; font-size: 0.9rem; text-transform: uppercase;">MEMUAT...</div>
+                <h2 style="margin-top: 5px; font-weight: 800;">Input Kolektif 8 Juri</h2>
             </div>
 
-            <div style="margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 16px; border: 1px solid #edf2f7;">
-                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
-                    <span style="color: #636e72;">PROGRES RT DINILAI</span>
-                    <span id="stat-progress-text" style="color: var(--primary-dark);">0/0</span>
+            <div style="margin-bottom: 20px; background: #f8f9fa; padding: 12px; border-radius: 14px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 5px;">
+                    <span style="color: #636e72;">PROGRES RT SELESAI</span>
+                    <span id="stat-progress-text">0/25</span>
                 </div>
-                <div class="progress-container">
-                    <div id="stat-progress-bar" class="progress-bar" style="width: 0%;"></div>
+                <div class="progress-container" style="height: 8px;">
+                    <div id="stat-progress-bar" class="progress-bar"></div>
                 </div>
             </div>
 
@@ -35,35 +34,31 @@
                 
                 <div class="form-group">
                     <label>👥 Pilih Kelompok</label>
-                    <select id="kelompok" size="5" required style="margin-top: 8px;"></select>
+                    <select id="kelompok" size="5" required></select>
                 </div>
 
-                <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <div style="text-align: center;">
-                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 1</label>
-                        <input type="number" id="skor1" min="0" max="100" placeholder="0" required 
-                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
-                    </div>
-                    <div style="text-align: center;">
-                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 2</label>
-                        <input type="number" id="skor2" min="0" max="100" placeholder="0" required 
-                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
-                    </div>
-                    <div style="text-align: center;">
-                        <label style="font-size: 11px; font-weight: 700; color: #636e72;">Juri 3</label>
-                        <input type="number" id="skor3" min="0" max="100" placeholder="0" required 
-                               style="font-size: 1.5rem; text-align: center; padding: 10px; font-weight: 800; color: var(--primary-dark); border-color: var(--primary);">
-                    </div>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <script>
+                        for(let i=1; i<=8; i++) {
+                            document.write(`
+                                <div style="text-align: center;">
+                                    <label style="font-size: 10px; font-weight: 700; color: #636e72;">Juri ${i}</label>
+                                    <input type="number" id="skor${i}" min="0" max="100" placeholder="0" required 
+                                           style="font-size: 1.1rem; text-align: center; padding: 8px; font-weight: 800; color: var(--primary-dark);">
+                                </div>
+                            `);
+                        }
+                    </script>
                 </div>
 
                 <button class="btn-premium" type="submit" id="btn-submit" style="margin-top:25px;">
-                    <span>🚀 SIMPAN SEMUA NILAI JURI</span>
+                    <span>🚀 SIMPAN 8 NILAI JURI</span>
                 </button>
             </form>
 
-            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #ddd; text-align: center;">
-                <button onclick="handleLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                    🚪 Keluar dari Sistem
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd; text-align: center;">
+                <button onclick="handleLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-weight: 700; font-size: 11px; text-transform: uppercase;">
+                    🚪 Keluar Sistem
                 </button>
             </div>
         </div>
@@ -78,27 +73,17 @@
 
         function showToast(msg, err=false) {
             const t = document.getElementById('toast');
-            t.innerText = msg; 
-            t.style.background = err ? '#e74c3c' : '#2d3436';
-            t.style.display = 'block'; 
-            setTimeout(() => t.style.display = 'none', 3000);
+            t.innerText = msg; t.style.background = err ? '#e74c3c' : '#2d3436';
+            t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        // Fungsi baru untuk memperbarui Progress Bar
         async function updateProgress() {
-            // Mengambil data skor yang sudah masuk untuk POS ini
-            const { data } = await supabaseClient
-                .from('skor_pos')
-                .select('id_peserta')
-                .eq('id_pos', pId);
-
+            const { data } = await supabaseClient.from('skor_pos').select('id_peserta').eq('id_pos', pId);
             if (data) {
-                // Menghitung jumlah RT unik yang sudah diisi (karena 1 RT ada 3 baris juri)
                 const uniquePeserta = new Set(data.map(item => item.id_peserta));
                 const sudahIsi = uniquePeserta.size;
                 const totalRT = daftarPeserta.length || 25;
                 const persen = (sudahIsi / totalRT) * 100;
-
                 document.getElementById('stat-progress-bar').style.width = persen + '%';
                 document.getElementById('stat-progress-text').innerText = `${sudahIsi}/${totalRT}`;
             }
@@ -107,12 +92,8 @@
         protectPage().then(async (session) => {
             pId = session.user.user_metadata.pos_id;
             document.getElementById('pos-badge').innerText = `🚩 OPERATOR POS ${pId}`;
-            
-            const { data } = await supabaseClient.from('peserta').select('*').order('nama_kelompok', { ascending: true });
-            daftarPeserta = data; 
-            renderKelompok(data);
-            
-            // Panggil progress saat pertama kali dimuat
+            const { data } = await supabaseClient.from('peserta').select('*').order('nama_kelompok');
+            daftarPeserta = data; renderKelompok(data);
             updateProgress();
 
             document.getElementById('search-kelompok').oninput = (e) => {
@@ -124,37 +105,27 @@
                 e.preventDefault();
                 const btn = document.getElementById('btn-submit');
                 const idPeserta = document.getElementById('kelompok').value;
-                
-                btn.disabled = true; 
-                btn.innerText = "⏳ Sedang Menyimpan...";
+                btn.disabled = true; btn.innerText = "⏳ Menyimpan...";
 
-                const scoresToUpload = [
-                    { id_peserta: idPeserta, id_pos: pId, id_juri: 1, nilai: document.getElementById('skor1').value },
-                    { id_peserta: idPeserta, id_pos: pId, id_juri: 2, nilai: document.getElementById('skor2').value },
-                    { id_peserta: idPeserta, id_pos: pId, id_juri: 3, nilai: document.getElementById('skor3').value }
-                ];
+                const scores = [];
+                for(let i=1; i<=8; i++) {
+                    scores.push({ id_peserta: idPeserta, id_pos: pId, id_juri: i, nilai: document.getElementById(`skor${i}`).value });
+                }
 
-                const { error } = await supabaseClient
-                    .from('skor_pos')
-                    .upsert(scoresToUpload, { onConflict: 'id_peserta, id_pos, id_juri' });
-                
-                btn.disabled = false; 
-                btn.innerText = "🚀 SIMPAN SEMUA NILAI JURI";
+                const { error } = await supabaseClient.from('skor_pos').upsert(scores, { onConflict: 'id_peserta, id_pos, id_juri' });
+                btn.disabled = false; btn.innerText = "🚀 SIMPAN 8 NILAI JURI";
 
-                if (error) {
-                    showToast("❌ Gagal menyimpan data juri.", true);
-                } else { 
-                    showToast("✅ Berhasil! 3 Nilai Juri telah tersimpan."); 
-                    e.target.reset(); 
-                    renderKelompok(daftarPeserta); 
-                    // Update progress setelah berhasil simpan
-                    updateProgress();
+                if (error) showToast("❌ Gagal simpan.", true);
+                else { 
+                    showToast("✅ Berhasil disimpan!"); 
+                    e.target.reset(); renderKelompok(daftarPeserta); updateProgress();
+                    document.getElementById('search-kelompok').focus();
                 }
             };
         });
 
         function renderKelompok(d) {
-            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}" style="padding:10px;">${p.nama_kelompok}</option>`).join('');
+            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}">${p.nama_kelompok}</option>`).join('');
         }
     </script>
 </body>

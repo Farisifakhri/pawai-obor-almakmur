@@ -23,7 +23,7 @@
                         <tr>
                             <th style="text-align:center; width: 80px;">Posisi</th>
                             <th>Nama Kelompok (RT/RW)</th>
-                            <th style="text-align:center; width: 120px;">Skor Akhir</th>
+                            <th style="text-align:center; width: 140px;">Skor Akhir (/400)</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -49,51 +49,58 @@
 
     <script src="assets/js/app.js"></script>
     <script>
-        // Fungsi untuk mengambil data dari view 'leaderboard'
         async function loadLeaderboard() {
-            const { data, error } = await supabaseClient
-                .from('leaderboard')
-                .select('*')
-                .order('nilai_akhir', { ascending: false });
-
+            // Ambil data mentah untuk memastikan hitungan /8 akurat
+            const { data: pesertasi } = await supabaseClient.from('peserta').select('*');
+            const { data: scores } = await supabaseClient.from('skor_pos').select('*');
+            
             const tbody = document.getElementById('leaderboard-body');
             
-            if (error) {
-                console.error('Error fetching data:', error);
-                return;
-            }
+            if (pesertasi && scores) {
+                const results = pesertasi.map(p => {
+                    let totalFinal400 = 0;
+                    
+                    // Hitung rata-rata per pos (8 juri)
+                    [1, 2, 3, 4].forEach(posId => {
+                        const sPos = scores.filter(s => s.id_peserta === p.id && s.id_pos === posId);
+                        if (sPos.length > 0) {
+                            const sum = sPos.reduce((acc, curr) => acc + Number(curr.nilai), 0);
+                            // Aturan aa: Total nilai di pos dibagi 8
+                            totalFinal400 += (sum / 8);
+                        }
+                    });
+                    
+                    return { nama: p.nama_kelompok, skor: totalFinal400 };
+                }).sort((a, b) => b.skor - a.skor);
 
-            if (data && data.length > 0) {
-                tbody.innerHTML = data.map((item, index) => {
-                    // Logika pewarnaan untuk Top 3
-                    let badgeColor = '#2d3436';
-                    if (index === 0) badgeColor = '#f1c40f'; // Emas
-                    if (index === 1) badgeColor = '#95a5a6'; // Perak
-                    if (index === 2) badgeColor = '#cd7f32'; // Perunggu
+                if (results.length > 0) {
+                    tbody.innerHTML = results.map((item, index) => {
+                        let badgeColor = '#2d3436';
+                        if (index === 0) badgeColor = '#f1c40f'; // Emas
+                        if (index === 1) badgeColor = '#95a5a6'; // Perak
+                        if (index === 2) badgeColor = '#cd7f32'; // Perunggu
 
-                    return `
-                        <tr>
-                            <td align="center">
-                                <span style="background: ${badgeColor}; color: white; padding: 5px 12px; border-radius: 50px; font-weight: 800; font-size: 13px;">
-                                    ${index + 1}
-                                </span>
-                            </td>
-                            <td style="font-weight: 700; color: var(--primary-dark);">${item.nama_kelompok}</td>
-                            <td align="center" style="font-weight: 800; color: var(--primary); font-size: 18px;">
-                                ${parseFloat(item.nilai_akhir).toFixed(2)}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            } else {
-                tbody.innerHTML = `<tr><td colspan="3" align="center" style="padding:30px; color:#999;">Belum ada nilai yang masuk.</td></tr>`;
+                        return `
+                            <tr>
+                                <td align="center">
+                                    <span style="background: ${badgeColor}; color: white; padding: 5px 12px; border-radius: 50px; font-weight: 800; font-size: 13px;">
+                                        ${index + 1}
+                                    </span>
+                                </td>
+                                <td style="font-weight: 700; color: var(--primary-dark);">${item.nama}</td>
+                                <td align="center" style="font-weight: 800; color: var(--primary); font-size: 18px;">
+                                    ${item.skor.toFixed(2)}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="3" align="center" style="padding:30px; color:#999;">Belum ada nilai masuk.</td></tr>`;
+                }
             }
         }
 
-        // Jalankan saat halaman dimuat
         loadLeaderboard();
-
-        // Refresh otomatis setiap 15 detik
         setInterval(loadLeaderboard, 15000);
     </script>
 </body>

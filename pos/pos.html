@@ -21,41 +21,37 @@
                     <span style="color: #636e72;">PROGRES RT SELESAI</span>
                     <span id="stat-progress-text">0/25</span>
                 </div>
-                <div class="progress-container" style="height: 8px;">
-                    <div id="stat-progress-bar" class="progress-bar"></div>
-                </div>
+                <div class="progress-container"><div id="stat-progress-bar" class="progress-bar"></div></div>
             </div>
 
             <form id="pos-form">
                 <div class="form-group">
-                    <label>🔍 Cari Kelompok (RT/RW)</label>
-                    <input type="text" id="search-kelompok" placeholder="Ketik nomor RT..." autocomplete="off">
+                    <label>🔍 Cari RT/RW</label>
+                    <input type="text" id="search-kelompok" placeholder="Cari..." autocomplete="off">
                 </div>
-                
                 <div class="form-group">
                     <label>👥 Pilih Kelompok</label>
                     <select id="kelompok" size="5" required></select>
                 </div>
 
-                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;">
                     <script>
                         for(let i=1; i<=8; i++) {
                             document.write(`
-                                <div style="text-align: center;">
-                                    <label style="font-size: 10px; font-weight: 700; color: #636e72;">Juri ${i}</label>
+                                <div style="text-align:center;">
+                                    <label style="font-size:10px; font-weight:700; color:#636e72;">J${i}</label>
                                     <input type="number" id="skor${i}" min="0" max="100" placeholder="0" required 
-                                           style="font-size: 1.1rem; text-align: center; padding: 8px; font-weight: 800; color: var(--primary-dark);">
+                                    style="font-size:1.1rem; text-align:center; padding:8px; font-weight:800; border:2px solid #edf2f7; border-radius:12px; color:var(--primary-dark);">
                                 </div>
                             `);
                         }
                     </script>
                 </div>
-
                 <button class="btn-premium" type="submit" id="btn-submit" style="margin-top:25px;">
                     <span>🚀 SIMPAN 8 NILAI JURI</span>
                 </button>
             </form>
-
+            
             <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd; text-align: center;">
                 <button onclick="handleLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-weight: 700; font-size: 11px; text-transform: uppercase;">
                     🚪 Keluar Sistem
@@ -68,8 +64,7 @@
 
     <script src="../assets/js/app.js"></script>
     <script>
-        let daftarPeserta = [];
-        let pId;
+        let daftarPeserta = [], pId;
 
         function showToast(msg, err=false) {
             const t = document.getElementById('toast');
@@ -80,12 +75,10 @@
         async function updateProgress() {
             const { data } = await supabaseClient.from('skor_pos').select('id_peserta').eq('id_pos', pId);
             if (data) {
-                const uniquePeserta = new Set(data.map(item => item.id_peserta));
-                const sudahIsi = uniquePeserta.size;
-                const totalRT = daftarPeserta.length || 25;
-                const persen = (sudahIsi / totalRT) * 100;
-                document.getElementById('stat-progress-bar').style.width = persen + '%';
-                document.getElementById('stat-progress-text').innerText = `${sudahIsi}/${totalRT}`;
+                const unique = new Set(data.map(item => item.id_peserta));
+                const percent = (unique.size / (daftarPeserta.length || 25)) * 100;
+                document.getElementById('stat-progress-bar').style.width = percent + '%';
+                document.getElementById('stat-progress-text').innerText = `${unique.size}/${daftarPeserta.length || 25}`;
             }
         }
 
@@ -93,7 +86,8 @@
             pId = session.user.user_metadata.pos_id;
             document.getElementById('pos-badge').innerText = `🚩 OPERATOR POS ${pId}`;
             const { data } = await supabaseClient.from('peserta').select('*').order('nama_kelompok');
-            daftarPeserta = data; renderKelompok(data);
+            daftarPeserta = data || []; 
+            renderKelompok(daftarPeserta); 
             updateProgress();
 
             document.getElementById('search-kelompok').oninput = (e) => {
@@ -104,28 +98,37 @@
             document.getElementById('pos-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('btn-submit');
-                const idPeserta = document.getElementById('kelompok').value;
+                const idK = parseInt(document.getElementById('kelompok').value);
                 btn.disabled = true; btn.innerText = "⏳ Menyimpan...";
 
                 const scores = [];
                 for(let i=1; i<=8; i++) {
-                    scores.push({ id_peserta: idPeserta, id_pos: pId, id_juri: i, nilai: document.getElementById(`skor${i}`).value });
+                    scores.push({ 
+                        id_peserta: idK, 
+                        id_pos: pId, 
+                        id_juri: i, 
+                        nilai: parseInt(document.getElementById(`skor${i}`).value) 
+                    });
                 }
 
                 const { error } = await supabaseClient.from('skor_pos').upsert(scores, { onConflict: 'id_peserta, id_pos, id_juri' });
+                
                 btn.disabled = false; btn.innerText = "🚀 SIMPAN 8 NILAI JURI";
-
-                if (error) showToast("❌ Gagal simpan.", true);
-                else { 
+                
+                if (error) {
+                    showToast("❌ Gagal: " + error.message, true);
+                } else { 
                     showToast("✅ Berhasil disimpan!"); 
-                    e.target.reset(); renderKelompok(daftarPeserta); updateProgress();
+                    e.target.reset(); 
+                    renderKelompok(daftarPeserta); 
+                    updateProgress();
                     document.getElementById('search-kelompok').focus();
                 }
             };
         });
 
         function renderKelompok(d) {
-            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}">${p.nama_kelompok}</option>`).join('');
+            document.getElementById('kelompok').innerHTML = d.map(p => `<option value="${p.id}" style="padding:10px;">${p.nama_kelompok}</option>`).join('');
         }
     </script>
 </body>

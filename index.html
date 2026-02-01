@@ -12,21 +12,22 @@
     <div class="screen-wrapper leaderboard-page">
         <div class="header-section">
             <div class="lantern-icon">🏮</div>
-            <h1>Leaderboard Live</h1>
-            <p>Pawai Obor Ramadhan Masjid Al-Ma'mur</p>
+            <h1 style="color: var(--primary-dark); font-weight: 800; margin-bottom: 5px;">Leaderboard Live</h1>
+            <p style="color: #636e72; font-weight: 600;">Pawai Obor Ramadhan Masjid Al-Ma'mur</p>
         </div>
 
         <div class="card leaderboard-card">
             <div class="table-info">
                 <span>📊 Update otomatis setiap 15 detik</span>
             </div>
+
             <div class="table-wrapper custom-scroll">
                 <table>
                     <thead>
                         <tr>
                             <th class="col-rank">Posisi</th>
                             <th>Nama Kelompok (RT/RW)</th>
-                            <th class="col-score">Skor Akhir</th>
+                            <th class="col-score">Skor Akhir (/400)</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
@@ -41,7 +42,7 @@
         </div>
 
         <div class="footer-action">
-            <a href="login.html" class="btn-premium">
+            <a href="login.html" class="btn-premium" style="width: auto; padding: 14px 40px;">
                 <span>🔐 Login Panitia</span>
             </a>
             <p class="copyright">
@@ -52,36 +53,63 @@
 
     <script src="assets/js/app.js"></script>
     <script>
+        /**
+         * Fungsi utama untuk memuat data dan menghitung skor
+         * Rumus: (Total Nilai di Pos / 8) x 4 Pos = Maks 400
+         */
         async function loadLeaderboard() {
-            const { data: pesertasi } = await supabaseClient.from('peserta').select('*');
-            const { data: scores } = await supabaseClient.from('skor_pos').select('*');
+            // Ambil data peserta dan data skor mentah
+            const { data: pesertasi, error: errP } = await supabaseClient.from('peserta').select('*');
+            const { data: scores, error: errS } = await supabaseClient.from('skor_pos').select('*');
             
             const tbody = document.getElementById('leaderboard-body');
             
+            if (errP || errS) {
+                console.error('Error fetching data:', errP || errS);
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">❌ Gagal memuat data dari database.</td></tr>`;
+                return;
+            }
+
             if (pesertasi && scores) {
+                // Menghitung skor kumulatif untuk setiap peserta
                 const results = pesertasi.map(p => {
                     let totalFinal400 = 0;
+                    
+                    // Iterasi melalui 4 titik pos pengecekan
                     [1, 2, 3, 4].forEach(posId => {
                         const sPos = scores.filter(s => s.id_peserta === p.id && s.id_pos === posId);
                         if (sPos.length > 0) {
+                            // Penjumlahan nilai 8 juri dengan konversi tipe data ke Number
                             const sum = sPos.reduce((acc, curr) => acc + Number(curr.nilai), 0);
+                            // Rata-rata per pos (sum / 8) kemudian ditotal
                             totalFinal400 += (sum / 8);
                         }
                     });
+                    
                     return { nama: p.nama_kelompok, skor: totalFinal400 };
-                }).sort((a, b) => b.skor - a.skor);
+                }).sort((a, b) => b.skor - a.skor); // Urutkan dari skor tertinggi
 
                 if (results.length > 0) {
                     tbody.innerHTML = results.map((item, index) => {
                         let badgeClass = 'rank-default';
+                        let labelHarapan = ''; 
+
+                        // Penentuan medali Juara 1, 2, 3
                         if (index === 0) badgeClass = 'rank-1';
-                        if (index === 1) badgeClass = 'rank-2';
-                        if (index === 2) badgeClass = 'rank-3';
+                        else if (index === 1) badgeClass = 'rank-2';
+                        else if (index === 2) badgeClass = 'rank-3';
+                        
+                        // Penentuan Kategori Juara Harapan (Rank 4, 5, 6)
+                        else if (index >= 3 && index <= 5) { 
+                            badgeClass = 'rank-harapan'; 
+                            labelHarapan = `<span class="harapan-label">H${index - 2}</span>`; 
+                        }
 
                         return `
                             <tr class="row-animate">
                                 <td align="center">
                                     <span class="rank-badge ${badgeClass}">${index + 1}</span>
+                                    ${labelHarapan}
                                 </td>
                                 <td class="group-name">${item.nama}</td>
                                 <td align="center" class="final-score">
@@ -91,11 +119,15 @@
                         `;
                     }).join('');
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Belum ada nilai masuk.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Belum ada nilai masuk dari operator pos.</td></tr>`;
                 }
             }
         }
+
+        // Eksekusi awal saat halaman siap
         loadLeaderboard();
+
+        // Refresh data secara real-time setiap 15 detik
         setInterval(loadLeaderboard, 15000);
     </script>
 </body>

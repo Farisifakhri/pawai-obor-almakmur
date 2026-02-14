@@ -5,148 +5,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="assets/images/logo_dkm.png">
+    <link rel="icon" type="image/png" href="../assets/images/logo_dkm.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <title>Admin - Monitoring & Edit</title>
+    
+    <title>Admin - Monitoring Pawai</title>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Control Panel Admin</h1>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <button class="btn" onclick="exportToExcel()" style="background:#27ae60;">📥 Excel</button>
-            <button class="btn" onclick="location.reload()" style="background:#3498db;">🔄 Refresh</button>
-        </div>
+    <div class="screen-wrapper" style="padding-top: 20px; justify-content: flex-start;">
+        <div class="container" style="max-width: 1200px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: var(--primary-dark); font-weight: 800;">🎛️ Control Panel Admin</h1>
+                <p style="color: #636e72;">Monitoring Real-time & Manajemen Data (6 Juri)</p>
+            </div>
 
-        <div class="card">
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="text-align:center">Rank</th>
-                            <th>Nama Kelompok</th>
-                            <th style="text-align:center">P1 (Avg)</th>
-                            <th style="text-align:center">P2 (Avg)</th>
-                            <th style="text-align:center">P3 (Avg)</th>
-                            <th style="text-align:center">P4 (Avg)</th>
-                            <th style="text-align:center">Total 12J</th>
-                            <th style="text-align:center">Final Avg</th>
-                            <th style="text-align:center">Edit</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-body"></tbody>
-                    <tfoot id="admin-footer" style="background:#f8f9fa; font-weight:800;"></tfoot>
-                </table>
+            <div style="display:flex; gap:15px; margin-bottom:25px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn-premium" onclick="exportToExcel()" style="width: auto; background: #27ae60;">
+                    📊 Download Excel Laporan
+                </button>
+                <button class="btn-premium" onclick="location.reload()" style="width: auto; background: #2980b9;">
+                    🔄 Refresh Data
+                </button>
+                <button class="btn-premium" onclick="resetData()" style="width: auto; background: #c0392b;">
+                    ⚠️ Hapus Data Simulasi
+                </button>
+            </div>
+
+            <div class="card" style="padding: 10px;">
+                <div class="table-wrapper custom-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align:center; width: 50px;">Rank</th>
+                                <th>Nama Kelompok</th>
+                                <th style="text-align:center">Pos 1 (Avg)</th>
+                                <th style="text-align:center">Pos 2 (Avg)</th>
+                                <th style="text-align:center">Pos 3 (Avg)</th>
+                                <th style="text-align:center">Pos 4 (Avg)</th>
+                                <th style="text-align:center; background: #f0fdf4;">Total Skor (/400)</th>
+                                <th style="text-align:center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-body">
+                            <tr><td colspan="8" align="center" style="padding:20px;">⏳ Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="../assets/js/app.js"></script>
     <script>
-        let leaderboardData = [], allScores = [];
+        let leaderboardData = []; 
+        let allScores = [];
 
+        // 1. Fungsi Utama: Load Data Dashboard
         protectPage().then(async () => {
-            const { data: ld } = await supabaseClient.from('leaderboard').select('*').order('nilai_akhir', { ascending: false });
+            loadDashboard();
+        });
+
+        async function loadDashboard() {
+            // Ambil data peserta & skor
+            const { data: pesertasi } = await supabaseClient.from('peserta').select('*');
             const { data: sc } = await supabaseClient.from('skor_pos').select('*');
-            leaderboardData = ld || []; allScores = sc || [];
             
-            let colTotals = [0,0,0,0], colCounts = [0,0,0,0];
+            allScores = sc || [];
+            
+            // Hitung skor di sisi client agar sinkron dengan rumus 6 juri
+            leaderboardData = pesertasi.map(p => {
+                let totalFinal400 = 0;
+                let posAvgs = [];
+
+                [1, 2, 3, 4].forEach(posId => {
+                    const scores = allScores.filter(s => s.id_peserta === p.id && s.id_pos === posId);
+                    if (scores.length > 0) {
+                        const sum = scores.reduce((acc, curr) => acc + Number(curr.nilai), 0);
+                        const avg = sum / 6; // RUMUS BARU: Dibagi 6
+                        totalFinal400 += avg;
+                        posAvgs.push(avg.toFixed(1));
+                    } else {
+                        posAvgs.push("-");
+                    }
+                });
+
+                return { ...p, posAvgs, nilai_akhir: totalFinal400 };
+            }).sort((a, b) => b.nilai_akhir - a.nilai_akhir); // Urutkan rank
+
+            renderTable();
+        }
+
+        function renderTable() {
             const tbody = document.getElementById('admin-body');
-
-            
-            tbody.innerHTML = leaderboardData.map((p, i) => {
-            let final400 = 0;
-            const posAvgs = [1,2,3,4].map((posId) => {
-            const scores = allScores.filter(s => Number(s.id_peserta) === Number(p.id_peserta) && s.id_pos === posId);
-            if (scores.length > 0) {
-            const avg = scores.reduce((a, c) => a + Number(c.nilai), 0) / 8; // Rata-rata 8 juri
-            final400 += avg;
-            return avg.toFixed(1);
-            }
-            return "0.0";
-            });
-
-            return `
-            <tr>
-            <td align="center">${i+1}</td>
-            <td><b>${p.nama_kelompok}</b></td>
-            <td align="center">${posAvgs[0]}</td><td align="center">${posAvgs[1]}</td>
-            <td align="center">${posAvgs[2]}</td><td align="center">${posAvgs[3]}</td>
-            <td align="center" style="background:#f0fff0; font-weight:800;">${final400.toFixed(2)} / 400</td>
-            <td align="center"><button onclick="openEdit(...)">Edit</button></td>
-            </tr>`;
-            });
-
-            document.getElementById('admin-footer').innerHTML = `
+            tbody.innerHTML = leaderboardData.map((p, i) => `
                 <tr>
-                    <td colspan="2" align="right">RATA-RATA GLOBAL POS:</td>
-                    <td align="center">${(colTotals[0]/(colCounts[0]||1)).toFixed(2)}</td>
-                    <td align="center">${(colTotals[1]/(colCounts[1]||1)).toFixed(2)}</td>
-                    <td align="center">${(colTotals[2]/(colCounts[2]||1)).toFixed(2)}</td>
-                    <td align="center">${(colTotals[3]/(colCounts[3]||1)).toFixed(2)}</td>
-                    <td colspan="3"></td>
-                </tr>`;
-        });
+                    <td align="center">
+                        <span style="background:${i<3?'#f1c40f':'#dfe6e9'}; padding:5px 10px; border-radius:50%; font-weight:bold; font-size:12px;">
+                            ${i+1}
+                        </span>
+                    </td>
+                    <td style="font-weight:700;">${p.nama_kelompok}</td>
+                    <td align="center">${p.posAvgs[0]}</td>
+                    <td align="center">${p.posAvgs[1]}</td>
+                    <td align="center">${p.posAvgs[2]}</td>
+                    <td align="center">${p.posAvgs[3]}</td>
+                    <td align="center" style="background:#f0fff0; font-weight:800; color:#27ae60; font-size:16px;">
+                        ${p.nilai_akhir.toFixed(2)}
+                    </td>
+                    <td align="center">
+                        <button onclick="openEdit(${p.id}, '${p.nama_kelompok}')" 
+                                style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-size:12px;">
+                            ✏️ Edit
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
+        // 2. Fungsi Edit Data (Dengan Validasi Juri 1-6)
         async function openEdit(id, nama) {
-    // Diubah menjadi 1-4 dan 1-8 sesuai jumlah juri baru
-    const p = prompt(`Edit RT: ${nama}\nMasukkan POS (1-4):`); 
-    if(!p) return;
-    
-    const j = prompt(`Masukkan JURI (1-8):`); 
-    if(!j) return;
-    
-    const n = prompt(`Masukkan NILAI BARU (0-100):`); 
-    if(n === null) return;
-    
-    const { error } = await supabaseClient.from('skor_pos').upsert({ 
-        id_peserta: id, 
-        id_pos: parseInt(p), 
-        id_juri: parseInt(j), 
-        nilai: parseInt(n) 
-    }, { onConflict: 'id_peserta, id_pos, id_juri' });
+            const p = prompt(`Edit Nilai: ${nama}\n\nMasukkan POS (1-4):`);
+            if (!p || p < 1 || p > 4) return;
 
-    if(error) alert("Gagal: " + error.message); 
-    else { alert("✅ Data Juri Berhasil Diperbarui!"); location.reload(); }
-}
+            const j = prompt(`Masukkan JURI (1-6):`);
+            if (!j || j < 1 || j > 6) {
+                alert("❌ Error: Juri hanya boleh 1 sampai 6!");
+                return;
+            }
 
-function exportToExcel() {
-    const d = leaderboardData.map((p, i) => {
-        const r = { "Rank": i+1, "Kelompok": p.nama_kelompok };
-        let finalScore400 = 0;
+            const n = prompt(`Masukkan NILAI BARU (0-100):`);
+            if (n === null || isNaN(n) || n < 0 || n > 100) {
+                alert("❌ Error: Nilai harus angka 0-100!");
+                return;
+            }
 
-        // Loop melalui 4 POS
-        [1,2,3,4].forEach(pos => {
-            let posSum = 0;
-            // Loop melalui 8 JURI per POS
-            [1,2,3,4,5,6,7,8].forEach(jur => {
-                const s = allScores.find(x => 
-                    Number(x.id_peserta) === Number(p.id_peserta) && 
-                    x.id_pos === pos && 
-                    x.id_juri === jur
-                );
-                const n = s ? Number(s.nilai) : 0;
-                
-                // Menambahkan kolom detail per juri ke Excel
-                r[`P${pos} J${jur}`] = n; 
-                posSum += n;
+            const { error } = await supabaseClient.from('skor_pos').upsert({
+                id_peserta: id,
+                id_pos: parseInt(p),
+                id_juri: parseInt(j),
+                nilai: parseInt(n)
+            }, { onConflict: 'id_peserta, id_pos, id_juri' });
+
+            if (error) alert("Gagal: " + error.message);
+            else {
+                alert("✅ Nilai berhasil diperbarui!");
+                loadDashboard(); // Refresh tabel tanpa reload halaman
+            }
+        }
+
+        // 3. Fungsi Export Excel (Looping 6 Juri)
+        function exportToExcel() {
+            const dataExport = leaderboardData.map((p, i) => {
+                const row = { 
+                    "Ranking": i + 1, 
+                    "Nama Kelompok": p.nama_kelompok 
+                };
+
+                // Loop Pos & Juri
+                [1, 2, 3, 4].forEach(pos => {
+                    let sumPos = 0;
+                    // HANYA SAMPAI 6 JURI
+                    [1, 2, 3, 4, 5, 6].forEach(jur => {
+                        const s = allScores.find(x => x.id_peserta === p.id && x.id_pos === pos && x.id_juri === jur);
+                        const val = s ? Number(s.nilai) : 0;
+                        row[`P${pos}_J${jur}`] = val; // Kolom P1_J1, P1_J2, dst.
+                        sumPos += val;
+                    });
+                    row[`Rata2_Pos${pos}`] = (sumPos / 6).toFixed(2);
+                });
+
+                row["TOTAL SKOR AKHIR"] = p.nilai_akhir.toFixed(2);
+                return row;
             });
-            // Hitung rata-rata per pos (Max 100) dan tambahkan ke total akhir
-            finalScore400 += (posSum / 8);
-        });
 
-        r["Total Skor (/400)"] = finalScore400.toFixed(2);
-        return r;
-    });
+            const ws = XLSX.utils.json_to_sheet(dataExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap_Nilai_Final");
+            XLSX.writeFile(wb, "Laporan_Pawai_AlMamur_Final.xlsx");
+        }
 
-    // Proses pembuatan file Excel
-    const ws = XLSX.utils.json_to_sheet(d); 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Final");
-    
-    // Nama file disesuaikan dengan sistem baru
-    XLSX.writeFile(wb, "Laporan_Pawai_32Juri_Final.xlsx");
-}
+        // 4. Fungsi Reset Data (Hapus Semua Nilai)
+        async function resetData() {
+            if (confirm("⚠️ PERINGATAN KERAS!\n\nApakah Anda yakin ingin MENGHAPUS SEMUA DATA NILAI?\nData simulasi akan hilang permanen. Gunakan tombol ini hanya sebelum acara dimulai.")) {
+                const code = prompt("Ketik 'HAPUS' untuk konfirmasi:");
+                if (code === 'HAPUS') {
+                    // Menghapus semua baris di tabel skor_pos
+                    const { error } = await supabaseClient.from('skor_pos').delete().gt('id', 0);
+                    
+                    if (error) alert("Gagal reset: " + error.message);
+                    else {
+                        alert("✅ Data simulasi BERHASIL DIHAPUS. Sistem siap digunakan!");
+                        location.reload();
+                    }
+                } else {
+                    alert("Kode konfirmasi salah. Batal menghapus.");
+                }
+            }
+        }
     </script>
 </body>
 </html>

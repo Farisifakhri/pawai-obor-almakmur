@@ -69,11 +69,13 @@
                 // Menghitung skor kumulatif untuk setiap peserta
                 const results = pesertasi.map(p => {
                     let totalFinal400 = 0;
+                    // Loop 4 Pos
                     [1, 2, 3, 4].forEach(posId => {
                         const sPos = scores.filter(s => s.id_peserta === p.id && s.id_pos === posId);
                         if (sPos.length > 0) {
                             const sum = sPos.reduce((acc, curr) => acc + Number(curr.nilai), 0);
-                            totalFinal400 += (sum / 8);
+                            // PERUBAHAN DI SINI: Dibagi 6 (Bukan 8 lagi)
+                            totalFinal400 += (sum / 6); 
                         }
                     });
                     
@@ -89,6 +91,7 @@
                         if (index === 0) badgeClass = 'rank-1';
                         else if (index === 1) badgeClass = 'rank-2';
                         else if (index === 2) badgeClass = 'rank-3';
+                        // Penentuan Juara Harapan 1-3
                         else if (index >= 3 && index <= 5) { 
                             badgeClass = 'rank-harapan'; 
                             labelHarapan = `<span class="harapan-label">H${index - 2}</span>`; 

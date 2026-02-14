@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href=".../assets/images/logo_dkm.png">
+    <link rel="icon" type="image/png" href="../assets/images/logo_dkm.png">
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>Input Nilai - Pos Pawai</title>
@@ -13,7 +13,7 @@
         <div class="card login-card" style="max-width: 550px;">
             <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
                 <div id="pos-badge" style="font-weight: 800; color: var(--primary-dark); letter-spacing: 1px; font-size: 0.9rem; text-transform: uppercase;">MEMUAT...</div>
-                <h2 style="margin-top: 5px; font-weight: 800;">Input Kolektif 8 Juri</h2>
+                <h2 style="margin-top: 5px; font-weight: 800;">Input Kolektif 6 Juri</h2>
             </div>
 
             <div style="margin-bottom: 20px; background: #f8f9fa; padding: 12px; border-radius: 14px;">
@@ -34,12 +34,13 @@
                     <select id="kelompok" size="5" required></select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px;">
                     <script>
-                        for(let i=1; i<=8; i++) {
+                        // Loop hanya sampai 6
+                        for(let i=1; i<=6; i++) {
                             document.write(`
                                 <div style="text-align:center;">
-                                    <label style="font-size:10px; font-weight:700; color:#636e72;">J${i}</label>
+                                    <label style="font-size:10px; font-weight:700; color:#636e72;">Juri ${i}</label>
                                     <input type="number" id="skor${i}" min="0" max="100" placeholder="0" required 
                                     style="font-size:1.1rem; text-align:center; padding:8px; font-weight:800; border:2px solid #edf2f7; border-radius:12px; color:var(--primary-dark);">
                                 </div>
@@ -48,7 +49,7 @@
                     </script>
                 </div>
                 <button class="btn-premium" type="submit" id="btn-submit" style="margin-top:25px;">
-                    <span>🚀 SIMPAN 8 NILAI JURI</span>
+                    <span>🚀 SIMPAN 6 NILAI JURI</span>
                 </button>
             </form>
             
@@ -76,9 +77,10 @@
             const { data } = await supabaseClient.from('skor_pos').select('id_peserta').eq('id_pos', pId);
             if (data) {
                 const unique = new Set(data.map(item => item.id_peserta));
-                const percent = (unique.size / (daftarPeserta.length || 25)) * 100;
+                // Total 25 Kelompok
+                const percent = (unique.size / 25) * 100;
                 document.getElementById('stat-progress-bar').style.width = percent + '%';
-                document.getElementById('stat-progress-text').innerText = `${unique.size}/${daftarPeserta.length || 25}`;
+                document.getElementById('stat-progress-text').innerText = `${unique.size}/25`;
             }
         }
 
@@ -102,7 +104,8 @@
                 btn.disabled = true; btn.innerText = "⏳ Menyimpan...";
 
                 const scores = [];
-                for(let i=1; i<=8; i++) {
+                // PERUBAHAN LOOP: Hanya sampai 6
+                for(let i=1; i<=6; i++) {
                     scores.push({ 
                         id_peserta: idK, 
                         id_pos: pId, 
@@ -113,7 +116,7 @@
 
                 const { error } = await supabaseClient.from('skor_pos').upsert(scores, { onConflict: 'id_peserta, id_pos, id_juri' });
                 
-                btn.disabled = false; btn.innerText = "🚀 SIMPAN 8 NILAI JURI";
+                btn.disabled = false; btn.innerText = "🚀 SIMPAN 6 NILAI JURI";
                 
                 if (error) {
                     showToast("❌ Gagal: " + error.message, true);

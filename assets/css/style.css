@@ -460,3 +460,64 @@ table thead th {
     color: #0984e3;
     text-transform: uppercase;
 }
+
+/* ==========================================
+   STYLING LOGO HEADER (NEW)
+   ========================================== */
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; /* Jarak antar logo */
+    margin-bottom: 10px;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.header-logo {
+    height: 70px; /* Tinggi default di Laptop */
+    width: auto;  /* Lebar menyesuaikan biar proporsional */
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); /* Bayangan halus */
+}
+
+/* Efek Hover Keren */
+.header-logo:hover {
+    transform: scale(1.1) rotate(2deg);
+}
+
+.logo-divider {
+    height: 40px;
+    width: 2px;
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+/* Animasi Muncul dari Atas */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   RESPONSIF HP (MOBILE)
+   ========================================== */
+
+@media (max-width: 600px) {
+    .logo-container {
+        gap: 15px;
+    }
+
+    .header-logo {
+        height: 55px; /* Lebih kecil di HP biar tidak menuhin layar */
+    }
+
+    .logo-divider {
+        height: 30px;
+    }
+    
+    h1 {
+        font-size: 22px !important; /* Judul sedikit mengecil */
+    }
+}
